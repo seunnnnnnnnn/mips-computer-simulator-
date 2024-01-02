@@ -1,0 +1,208 @@
+.data
+welcomeMsg: .asciiz "\nWelcome to the MIPS calculator\n"
+optionMsg: .asciiz "\n\nSelect an option:\n[1]isPrime?        [2]Factorial        [3]Exit\n"
+invalidOptionMsg: .asciiz "Invalid option. Please select a valid option (1, 2, or 3).\n"
+invalidOptionMsg2: .asciiz "Not possible to calculate the factorial of a negative number, please try again;)\n"
+dash: .asciiz "\n------------\n"
+enterIntMsg: .asciiz "Enter an integer. (For factorial, range 1-12 only): "
+primeResultMsg: .asciiz " is a prime number :) \n"
+factMsg: .asciiz "Factorial"
+primeMsg: .asciiz "isPrime?"
+notPrimeResultMsg: .asciiz " is NOT a prime number :( \n"
+factorialResultMsg: .asciiz "Factorial of "
+isMsg: .asciiz " is "
+exitMsg: .asciiz "Exit.\n"
+negativePrimeMsg: .asciiz "There are no negative prime numbers, please try again.\n"
+zeroPrimeMsg: .asciiz "Zero is neither prime nor composite, please try again.\n"
+onePrimeMsg: .asciiz "For a number to be called a prime number, it must have only two positive factors.\n"
+overflowMsg: .asciiz "Factorial calculation overflowed for the given input. Please use a smaller number.\n"
+
+.text
+.globl main
+
+main:
+  li $v0, 4
+  la $a0, welcomeMsg
+  syscall
+
+main_loop:
+  li $v0, 4
+  la $a0, optionMsg
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t0, $v0
+
+  li $t1, 1
+  li $t2, 2
+  li $t3, 3
+  beq $t0, $t1, call_isPrime
+  beq $t0, $t2, call_factorial
+  beq $t0, $t3, exit_program
+  li $v0, 4
+  la $a0, invalidOptionMsg
+  syscall
+  j main_loop
+
+call_isPrime:
+  li $v0, 4
+  la $a0, dash
+  syscall
+
+  li $v0, 4
+  la $a0, primeMsg
+  syscall
+
+  li $v0, 4
+  la $a0, dash
+  syscall
+
+  jal isPrime
+  j main_loop
+
+call_factorial:
+  li $v0, 4
+  la $a0, dash
+  syscall
+
+  li $v0, 4
+  la $a0, factMsg
+  syscall
+
+  li $v0, 4
+  la $a0, dash
+  syscall
+
+  jal factorial
+  j main_loop
+
+isPrime:
+  li $v0, 4
+  la $a0, enterIntMsg
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t2, $v0
+
+  bltz $t2, display_negative_prime
+  beq $t2, $zero, display_zero_prime
+  beq $t2, $t1, display_one_prime
+
+  li $t3, 2
+  div $t2, $t3
+  mfhi $t4
+  beqz $t4, display_not_prime
+
+  li $t3, 3
+
+check_prime:
+  mul $t5, $t3, $t3
+  bgt $t5, $t2, prime_end
+
+  div $t2, $t3
+  mfhi $t4
+  beqz $t4, display_not_prime
+  addi $t3, $t3, 2
+  j check_prime
+
+prime_end:
+  li $v0, 1         
+  move $a0, $t2     
+  syscall
+  
+  li $v0, 4
+  la $a0, primeResultMsg
+  syscall
+  jr $ra
+
+display_negative_prime:
+  li $v0, 4
+  la $a0, negativePrimeMsg
+  syscall
+  j main_loop
+
+display_zero_prime:
+  li $v0, 4
+  la $a0, zeroPrimeMsg
+  syscall
+  j main_loop
+
+display_one_prime:
+  li $v0, 4
+  la $a0, onePrimeMsg
+  syscall
+  j main_loop
+
+display_not_prime:
+
+  li $v0, 1        
+  move $a0, $t2    
+  syscall
+  
+  li $v0, 4
+  la $a0, notPrimeResultMsg
+  syscall
+  jr $ra
+
+factorial:
+  li $v0, 4
+  la $a0, enterIntMsg
+  syscall
+
+  li $v0, 5
+  syscall
+  move $t5, $v0
+  move $t7, $t5
+
+  bltz $t5, factorial_negative
+  li $t6, 1
+  li $t8, 12
+
+  blez $t5, factorial_end
+  bgt $t5, $t8, factorial_overflow
+
+factorial_loop:
+  mul $t6, $t6, $t5
+  sub $t5, $t5, 1
+  bgtz $t5, factorial_loop
+
+factorial_end:
+  li $v0, 4
+  la $a0, factorialResultMsg
+  syscall
+
+  li $v0, 1
+  move $a0, $t7
+  syscall
+
+  li $v0, 4
+  la $a0, isMsg
+  syscall
+
+  li $v0, 1
+  move $a0, $t6
+  syscall
+  
+  j main_loop
+
+factorial_overflow:
+  li $v0, 4
+  la $a0, overflowMsg
+  syscall
+  j main_loop
+
+factorial_negative:
+  li $v0, 4
+  la $a0, invalidOptionMsg2
+  syscall
+  j main_loop
+
+exit_program:
+  li $v0, 4
+  la $a0, exitMsg
+  syscall
+
+  li $v0, 10
+  syscall
